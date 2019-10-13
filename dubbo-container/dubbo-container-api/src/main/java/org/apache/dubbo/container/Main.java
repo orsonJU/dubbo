@@ -60,10 +60,12 @@ public class Main {
 
             final List<Container> containers = new ArrayList<Container>();
             for (int i = 0; i < args.length; i++) {
+                // SPI机制
                 containers.add(loader.getExtension(args[i]));
             }
             logger.info("Use container type(" + Arrays.toString(args) + ") to run dubbo serivce.");
 
+            // shutdown？
             if ("true".equals(System.getProperty(SHUTDOWN_HOOK_KEY))) {
                 Runtime.getRuntime().addShutdownHook(new Thread("dubbo-container-shutdown-hook") {
                     @Override
@@ -86,6 +88,7 @@ public class Main {
                 });
             }
 
+            // 调用每一个container的start方法，所以每个container都实现了Thread？
             for (Container container : containers) {
                 container.start();
                 logger.info("Dubbo " + container.getClass().getSimpleName() + " started!");

@@ -312,6 +312,7 @@ public class ConfigUtils {
     public static int getPid() {
         if (PID < 0) {
             try {
+                // RuntimeMXBean可以获取到java运行时候的一些信息
                 RuntimeMXBean runtime = ManagementFactory.getRuntimeMXBean();
                 String name = runtime.getName(); // format: "pid@hostname"
                 PID = Integer.parseInt(name.substring(0, name.indexOf('@')));

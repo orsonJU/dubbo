@@ -24,6 +24,7 @@ import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+// logback也使用了spi机制？
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.rolling.RollingFileAppender;
 import ch.qos.logback.core.rolling.TimeBasedRollingPolicy;
@@ -46,6 +47,7 @@ public class LogbackContainer implements Container {
 
     @Override
     public void start() {
+        // 获取logback的配置文件
         String file = ConfigUtils.getProperty(LOGBACK_FILE);
         if (file != null && file.length() > 0) {
             String level = ConfigUtils.getProperty(LOGBACK_LEVEL);
@@ -71,6 +73,8 @@ public class LogbackContainer implements Container {
      * @param maxHistory
      */
     private void doInitializer(String file, String level, int maxHistory) {
+        // 初始化logback
+        // mist，这里的logback容器启动后，有什么用呢？我猜测是加载用户自定义的logback配置
         LoggerContext loggerContext = (LoggerContext) LoggerFactory.getILoggerFactory();
         Logger rootLogger = loggerContext.getLogger(Logger.ROOT_LOGGER_NAME);
         rootLogger.detachAndStopAllAppenders();

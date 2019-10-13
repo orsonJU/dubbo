@@ -46,6 +46,7 @@ public class Log4jContainer implements Container {
     @Override
     @SuppressWarnings("unchecked")
     public void start() {
+        // 配置当前jvm中的log4j
         String file = ConfigurationUtils.getProperty(LOG4J_FILE);
         if (file != null && file.length() > 0) {
             String level = ConfigurationUtils.getProperty(LOG4J_LEVEL);

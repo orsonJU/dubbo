@@ -46,7 +46,9 @@ public class SpringContainer implements Container {
         if (StringUtils.isEmpty(configPath)) {
             configPath = DEFAULT_SPRING_CONFIG;
         }
+        // 创建spring的ClassPathXmlApplicationContext对象，加载spring的所有xml配置
         context = new ClassPathXmlApplicationContext(configPath.split("[,\\s]+"), false);
+        // 这里就是spring的核心内容了
         context.refresh();
         context.start();
     }
