@@ -98,6 +98,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
      * Actually，when the {@link ExtensionLoader} init the {@link Protocol} instants,it will automatically wraps two
      * layers, and eventually will get a <b>ProtocolFilterWrapper</b> or <b>ProtocolListenerWrapper</b>
      */
+    // idea SPI
     private static final Protocol REF_PROTOCOL = ExtensionLoader.getExtensionLoader(Protocol.class).getAdaptiveExtension();
 
     /**

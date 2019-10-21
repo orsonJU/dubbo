@@ -280,6 +280,7 @@ public class DubboProtocol extends AbstractProtocol {
 
     @Override
     public <T> Exporter<T> export(Invoker<T> invoker) throws RpcException {
+        // url => dubbo://host:port
         URL url = invoker.getUrl();
 
         // export service.
@@ -287,7 +288,7 @@ public class DubboProtocol extends AbstractProtocol {
         DubboExporter<T> exporter = new DubboExporter<T>(invoker, key, exporterMap);
         exporterMap.put(key, exporter);
 
-        //export an stub service for dispatching event
+        // mist export an stub service for dispatching event
         Boolean isStubSupportEvent = url.getParameter(STUB_EVENT_KEY, DEFAULT_STUB_EVENT);
         Boolean isCallbackservice = url.getParameter(IS_CALLBACK_SERVICE, false);
         if (isStubSupportEvent && !isCallbackservice) {
@@ -303,7 +304,9 @@ public class DubboProtocol extends AbstractProtocol {
             }
         }
 
+        // @main open service
         openServer(url);
+        // 优化序列化
         optimizeSerialization(url);
 
         return exporter;
@@ -314,12 +317,14 @@ public class DubboProtocol extends AbstractProtocol {
         String key = url.getAddress();
         //client can export a service which's only for server to invoke
         boolean isServer = url.getParameter(IS_SERVER_KEY, true);
+        // 如果死后服务端
         if (isServer) {
             ExchangeServer server = serverMap.get(key);
             if (server == null) {
                 synchronized (this) {
                     server = serverMap.get(key);
                     if (server == null) {
+                        // 创建服务器
                         serverMap.put(key, createServer(url));
                     }
                 }
@@ -340,6 +345,7 @@ public class DubboProtocol extends AbstractProtocol {
                 .build();
         String str = url.getParameter(SERVER_KEY, DEFAULT_REMOTING_SERVER);
 
+        // 通过SPI加载Transporter
         if (str != null && str.length() > 0 && !ExtensionLoader.getExtensionLoader(Transporter.class).hasExtension(str)) {
             throw new RpcException("Unsupported server type: " + str + ", url: " + url);
         }
@@ -351,8 +357,10 @@ public class DubboProtocol extends AbstractProtocol {
             throw new RpcException("Fail to start server(url: " + url + ") " + e.getMessage(), e);
         }
 
+        // 服务端暴露服务不需要netty?
         str = url.getParameter(CLIENT_KEY);
         if (str != null && str.length() > 0) {
+            // 客户端通过dubbo协议，服务端建立连接？
             Set<String> supportedTypes = ExtensionLoader.getExtensionLoader(Transporter.class).getSupportedExtensions();
             if (!supportedTypes.contains(str)) {
                 throw new RpcException("Unsupported client type: " + str);

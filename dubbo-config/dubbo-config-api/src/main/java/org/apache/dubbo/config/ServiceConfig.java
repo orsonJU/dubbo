@@ -143,6 +143,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     /**
      * The exported services
      */
+    // 存放所有暴露的服务
     private final List<Exporter<?>> exporters = new ArrayList<Exporter<?>>();
 
     /**
@@ -369,13 +370,16 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
     public synchronized void export() {
         checkAndUpdateSubConfigs();
 
+        // 如果service不用发布
         if (!shouldExport()) {
             return;
         }
 
+        // 如果service需要延迟发布
         if (shouldDelay()) {
             DELAY_EXPORT_EXECUTOR.schedule(this::doExport, getDelay(), TimeUnit.MILLISECONDS);
         } else {
+            // @main method，发布服务
             doExport();
         }
     }
@@ -408,6 +412,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (exported) {
             return;
         }
+
+        // 第一次发布
         exported = true;
 
         if (StringUtils.isEmpty(path)) {
@@ -450,17 +456,22 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
+        // 加载所有注册URLs
         List<URL> registryURLs = loadRegistries(true);
+        // 加载当前service支持的发布协议
         for (ProtocolConfig protocolConfig : protocols) {
             String pathKey = URL.buildKey(getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), group, version);
             ProviderModel providerModel = new ProviderModel(pathKey, ref, interfaceClass);
             ApplicationModel.initProviderModel(pathKey, providerModel);
+            // @@main method 发布当前portocol协议的服务
             doExportUrlsFor1Protocol(protocolConfig, registryURLs);
         }
     }
 
     private void doExportUrlsFor1Protocol(ProtocolConfig protocolConfig, List<URL> registryURLs) {
         String name = protocolConfig.getName();
+
+        // 如果协议没有提供，则使用dubbp作为默认的协议
         if (StringUtils.isEmpty(name)) {
             name = DUBBO;
         }
@@ -468,6 +479,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         Map<String, String> map = new HashMap<String, String>();
         map.put(SIDE_KEY, PROVIDER_SIDE);
 
+        // 因为dubbo是基于URL驱动，所有解析当前<dubbo:service>元素的属性，追加到URL后面
         appendRuntimeParameters(map);
         appendParameters(map, metrics);
         appendParameters(map, application);
@@ -477,6 +489,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         appendParameters(map, provider);
         appendParameters(map, protocolConfig);
         appendParameters(map, this);
+
+        // <dubbo:method> 该标签为 <dubbo:service> 或 <dubbo:reference> 的子标签，用于控制到方法级
         if (CollectionUtils.isNotEmpty(methods)) {
             for (MethodConfig method : methods) {
                 appendParameters(map, method, method.getName());
@@ -533,10 +547,12 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
             } // end of methods for
         }
 
+        // <dubbo:service protocol="" />
         if (ProtocolUtils.isGeneric(generic)) {
             map.put(GENERIC_KEY, generic);
             map.put(METHODS_KEY, ANY_VALUE);
         } else {
+            // <dubbo:service version="" />
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
                 map.put(REVISION_KEY, revision);
@@ -550,6 +566,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), ","));
             }
         }
+
+        // <dubbo:service token="" />
         if (!ConfigUtils.isEmpty(token)) {
             if (ConfigUtils.isDefault(token)) {
                 map.put(TOKEN_KEY, UUID.randomUUID().toString());
@@ -557,7 +575,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                 map.put(TOKEN_KEY, token);
             }
         }
-        // export service
+        // @main method export service，获取host和post属性，并且基于host和port创建一个URL
         String host = this.findConfigedHosts(protocolConfig, registryURLs, map);
         Integer port = this.findConfigedPorts(protocolConfig, name, map);
         URL url = new URL(name, host, port, getContextPath(protocolConfig).map(p -> p + "/" + path).orElse(path), map);
@@ -573,15 +591,19 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (!SCOPE_NONE.equalsIgnoreCase(scope)) {
 
             // export to local if the config is not remote (export to remote only when config is remote)
+            // 发布本地服务
             if (!SCOPE_REMOTE.equalsIgnoreCase(scope)) {
                 exportLocal(url);
             }
             // export to remote if the config is not local (export to local only when config is local)
+            // 发布服务到远程
             if (!SCOPE_LOCAL.equalsIgnoreCase(scope)) {
                 if (CollectionUtils.isNotEmpty(registryURLs)) {
                     for (URL registryURL : registryURLs) {
                         //if protocol is only injvm ,not register
+
                         if (LOCAL_PROTOCOL.equalsIgnoreCase(url.getProtocol())) {
+                            // 发布服务到jvm中，不需要做任何改动
                             continue;
                         }
                         url = url.addParameterIfAbsent(DYNAMIC_KEY, registryURL.getParameter(DYNAMIC_KEY));
@@ -606,6 +628,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
                         Invoker<?> invoker = PROXY_FACTORY.getInvoker(ref, (Class) interfaceClass, registryURL.addParameterAndEncoded(EXPORT_KEY, url.toFullString()));
                         DelegateProviderMetaDataInvoker wrapperInvoker = new DelegateProviderMetaDataInvoker(invoker, this);
 
+                        // @Main method, 根据实现的protocol来暴露服务
                         Exporter<?> exporter = protocol.export(wrapperInvoker);
                         exporters.add(exporter);
                     }

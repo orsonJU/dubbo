@@ -46,6 +46,7 @@ public class DubboNamespaceHandler extends NamespaceHandlerSupport {
 
     @Override
     public void init() {
+        // 当在spring xml中解析到下列关键字到element时候，指定使用那个BeanDefinitionParser来进行解析
         registerBeanDefinitionParser("application", new DubboBeanDefinitionParser(ApplicationConfig.class, true));
         registerBeanDefinitionParser("module", new DubboBeanDefinitionParser(ModuleConfig.class, true));
         registerBeanDefinitionParser("registry", new DubboBeanDefinitionParser(RegistryConfig.class, true));
@@ -56,7 +57,9 @@ public class DubboNamespaceHandler extends NamespaceHandlerSupport {
         registerBeanDefinitionParser("provider", new DubboBeanDefinitionParser(ProviderConfig.class, true));
         registerBeanDefinitionParser("consumer", new DubboBeanDefinitionParser(ConsumerConfig.class, true));
         registerBeanDefinitionParser("protocol", new DubboBeanDefinitionParser(ProtocolConfig.class, true));
+        // 服务这册
         registerBeanDefinitionParser("service", new DubboBeanDefinitionParser(ServiceBean.class, true));
+        // 服务发现
         registerBeanDefinitionParser("reference", new DubboBeanDefinitionParser(ReferenceBean.class, false));
         registerBeanDefinitionParser("annotation", new AnnotationBeanDefinitionParser());
     }

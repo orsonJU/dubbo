@@ -64,6 +64,7 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
 
     private static final long serialVersionUID = 213195494150089726L;
 
+    // dubbo自己的service注解
     private final transient Service service;
 
     private transient ApplicationContext applicationContext;
@@ -119,8 +120,10 @@ public class ServiceBean<T> extends ServiceConfig<T> implements InitializingBean
     @SuppressWarnings({"unchecked", "deprecation"})
     public void afterPropertiesSet() throws Exception {
         if (getProvider() == null) {
+            // 获取所有的ProviderConfig类型的bean实例，包括子类，和父亲
             Map<String, ProviderConfig> providerConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProviderConfig.class, false, false);
             if (providerConfigMap != null && providerConfigMap.size() > 0) {
+                // 获取所有的ProtocolConfig的bean实例
                 Map<String, ProtocolConfig> protocolConfigMap = applicationContext == null ? null : BeanFactoryUtils.beansOfTypeIncludingAncestors(applicationContext, ProtocolConfig.class, false, false);
                 if (CollectionUtils.isEmptyMap(protocolConfigMap)
                         && providerConfigMap.size() > 1) { // backward compatibility

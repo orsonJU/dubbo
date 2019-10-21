@@ -1,2 +1,3 @@
+# 所有在spring xml中的配置，以dubbo开头的element都交给DubboNamespaceHandler来处理
 http\://dubbo.apache.org/schema/dubbo=org.apache.dubbo.config.spring.schema.DubboNamespaceHandler
 http\://code.alibabatech.com/schema/dubbo=org.apache.dubbo.config.spring.schema.DubboNamespaceHandler

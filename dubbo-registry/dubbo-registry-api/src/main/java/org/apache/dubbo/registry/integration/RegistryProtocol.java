@@ -192,7 +192,9 @@ public class RegistryProtocol implements Protocol {
     }
 
     @Override
+    // register:// 的这册协议处理逻辑
     public <T> Exporter<T> export(final Invoker<T> originInvoker) throws RpcException {
+        // 获得的是 zookeeper 注册中心的 url: zookeeper://ip:port
         URL registryUrl = getRegistryUrl(originInvoker);
         // url to export locally
         URL providerUrl = getProviderUrl(originInvoker);
@@ -206,7 +208,7 @@ public class RegistryProtocol implements Protocol {
         overrideListeners.put(overrideSubscribeUrl, overrideSubscribeListener);
 
         providerUrl = overrideUrlWithConfig(providerUrl, overrideSubscribeListener);
-        //export invoker
+        // @main method 交给具体的协议去暴露服务
         final ExporterChangeableWrapper<T> exporter = doLocalExport(originInvoker, providerUrl);
 
         // url to registry
@@ -243,6 +245,7 @@ public class RegistryProtocol implements Protocol {
 
         return (ExporterChangeableWrapper<T>) bounds.computeIfAbsent(key, s -> {
             Invoker<?> invokerDelegate = new InvokerDelegate<>(originInvoker, providerUrl);
+            //将 invoker 转换为 exporter 并启动 netty 服务
             return new ExporterChangeableWrapper<>((Exporter<T>) protocol.export(invokerDelegate), originInvoker);
         });
     }
