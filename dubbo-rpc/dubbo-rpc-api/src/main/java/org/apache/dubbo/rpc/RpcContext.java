@@ -52,6 +52,7 @@ import static org.apache.dubbo.rpc.Constants.RETURN_KEY;
  * @export
  * @see org.apache.dubbo.rpc.filter.ContextFilter
  */
+// 从上面的介绍可以看出来，RpcContext存放的是调用当前service的上一个调用者的信息
 public class RpcContext {
 
     /**

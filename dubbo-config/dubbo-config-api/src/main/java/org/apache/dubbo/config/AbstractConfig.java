@@ -602,12 +602,15 @@ public abstract class AbstractConfig implements Serializable {
             // loop methods, get override value and set the new value back to method
             Method[] methods = getClass().getMethods();
             for (Method method : methods) {
+                // idea 动态获取 ReferenceConfig的setter方法，只要<dubbo:reference>上的名字和setter方法的名字一致，就可以实现通用的逻辑处理
                 if (MethodUtils.isSetter(method)) {
                     String value = StringUtils.trim(compositeConfiguration.getString(extractPropertyName(getClass(), method)));
                     // isTypeMatch() is called to avoid duplicate and incorrect update, for example, we have two 'setGeneric' methods in ReferenceConfig.
                     if (StringUtils.isNotEmpty(value) && ClassUtils.isTypeMatch(method.getParameterTypes()[0], value)) {
                         method.invoke(this, ClassUtils.convertPrimitive(method.getParameterTypes()[0], value));
                     }
+
+                    // <dubbo:parameter>，可以作为任何dubbo标签的自标签，用来设置value
                 } else if (isParametersSetter(method)) {
                     String value = StringUtils.trim(compositeConfiguration.getString(extractPropertyName(getClass(), method)));
                     if (StringUtils.isNotEmpty(value)) {

@@ -34,6 +34,14 @@ import static org.apache.dubbo.config.spring.util.AnnotatedBeanDefinitionRegistr
  * @see Ordered
  * @since 2.5.8
  */
+// idea DubboConfigConfigurationRegistrar负责把带有@EnableDubboConfig的类进行扫描解释
+
+/*
+    这是一个复合的注解
+    @EnableDubboConfig
+        -> @EnableDubbo
+
+ */
 public class DubboConfigConfigurationRegistrar implements ImportBeanDefinitionRegistrar {
 
     @Override

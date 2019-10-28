@@ -23,6 +23,10 @@ import java.util.concurrent.CompletableFuture;
  *
  * @export
  */
+/*
+    GenericService, 因为dubbo中，消费者需要依赖具体的api jar才能通过调用接口的方式来调用具体的远程服务
+    但是如果消费者没有可以使用的api， 就需要使用泛化的接口 -> GenericService
+  */
 public interface GenericService {
 
     /**
@@ -38,6 +42,7 @@ public interface GenericService {
     Object $invoke(String method, String[] parameterTypes, Object[] args) throws GenericException;
 
     default CompletableFuture<Object> $invokeAsync(String method, String[] parameterTypes, Object[] args) throws GenericException {
+        // $invoke的实现，交由子类实现，需要返回一个确实的value
         Object object = $invoke(method, parameterTypes, args);
         if (object instanceof CompletableFuture) {
             return (CompletableFuture<Object>) object;

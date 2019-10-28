@@ -77,6 +77,8 @@ public abstract class Wrapper {
 
         @Override
         public Object invokeMethod(Object instance, String mn, Class<?>[] types, Object[] args) throws NoSuchMethodException {
+            // mn 是method name？
+            // idea， 因为远程调用过程中，所有的类都默认继承Object类，所有要处理Object类的几个方法
             if ("getClass".equals(mn)) {
                 return instance.getClass();
             }
@@ -121,6 +123,7 @@ public abstract class Wrapper {
         return ret;
     }
 
+    // idea @Main method
     private static Wrapper makeWrapper(Class<?> c) {
         if (c.isPrimitive()) {
             throw new IllegalArgumentException("Can not create wrapper for primitive type: " + c);
@@ -131,6 +134,18 @@ public abstract class Wrapper {
 
         StringBuilder c1 = new StringBuilder("public void setPropertyValue(Object o, String n, Object v){ ");
         StringBuilder c2 = new StringBuilder("public Object getPropertyValue(Object o, String n){ ");
+
+        // idea c3拼接的最终效果是
+        /*
+            invokeMethod(...) {
+                if("sayHello" === $2) {
+
+                } else if( "sayHi" == $3) {}
+
+
+                }
+            }
+         */
         StringBuilder c3 = new StringBuilder("public Object invokeMethod(Object o, String n, Class[] p, Object[] v) throws " + InvocationTargetException.class.getName() + "{ ");
 
         c1.append(name).append(" w; try{ w = ((").append(name).append(")$1); }catch(Throwable e){ throw new IllegalArgumentException(e); }");
@@ -142,7 +157,7 @@ public abstract class Wrapper {
         List<String> mns = new ArrayList<>(); // method names.
         List<String> dmns = new ArrayList<>(); // declaring method names.
 
-        // get all public field.
+        // idea get all public field.
         for (Field f : c.getFields()) {
             String fn = f.getName();
             Class<?> ft = f.getType();
@@ -156,7 +171,7 @@ public abstract class Wrapper {
         }
 
         Method[] methods = c.getMethods();
-        // get all public method.
+        // idea get all public method.
         boolean hasMethod = hasMethods(methods);
         if (hasMethod) {
             c3.append(" try{");

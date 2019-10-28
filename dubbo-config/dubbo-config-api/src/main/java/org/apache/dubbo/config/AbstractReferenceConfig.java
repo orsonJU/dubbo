@@ -120,6 +120,7 @@ public abstract class AbstractReferenceConfig extends AbstractInterfaceConfig {
         return generic;
     }
 
+
     public void setGeneric(String generic) {
         if (StringUtils.isEmpty(generic)) {
             return;

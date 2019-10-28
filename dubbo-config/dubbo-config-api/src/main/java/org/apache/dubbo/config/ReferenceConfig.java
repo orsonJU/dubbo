@@ -111,6 +111,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
      * A {@link ProxyFactory} implementation that will generate a reference service's proxy,the JavassistProxyFactory is
      * its default implementation
      */
+    // idea SPI, 默认使用JavassistProxyFactory来生成代理
     private static final ProxyFactory PROXY_FACTORY = ExtensionLoader.getExtensionLoader(ProxyFactory.class).getAdaptiveExtension();
 
     /**
@@ -213,6 +214,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
      * This method should be called right after the creation of this class's instance, before any property in other config modules is used.
      * Check each config modules are created properly and override their properties if necessary.
      */
+    // mist 根据reference的实例来更新其他配置信息？
     public void checkAndUpdateSubConfigs() {
         if (StringUtils.isEmpty(interfaceName)) {
             throw new IllegalStateException("<dubbo:reference interface=\"\" /> interface not allow null!");
@@ -221,10 +223,17 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         startConfigCenter();
         // get consumer's global configuration
         checkDefault();
+
+        // mist spring的refresh？--> 把获取的的<dubbo:reference>上的属性覆盖当前的属性
         this.refresh();
+
+        // mist 是否为泛化接口？
         if (getGeneric() == null && getConsumer() != null) {
+            // 缺省使用<dubbo:consumer>的generic -> 官方说明
             setGeneric(getConsumer().getGeneric());
         }
+
+        // interfaceClass 对应 <dubbo:reference interface="">
         if (ProtocolUtils.isGeneric(getGeneric())) {
             interfaceClass = GenericService.class;
         } else {
@@ -236,18 +245,22 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
             checkInterfaceAndMethods(interfaceClass, methods);
         }
+
         resolveFile();
         checkApplication();
         checkMetadataReport();
     }
 
+    // 返回对应的接口实例服务
     public synchronized T get() {
+        // mist 更新配置信息？
         checkAndUpdateSubConfigs();
 
         if (destroyed) {
             throw new IllegalStateException("The invoker of ReferenceConfig(" + url + ") has already destroyed!");
         }
         if (ref == null) {
+            // @main method
             init();
         }
         return ref;
@@ -274,24 +287,30 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         if (initialized) {
             return;
         }
+        // mist <dubbo:reference stub="" > -> <dubbo:reference local="">， local是旧版本里面的属性
         checkStubAndLocal(interfaceClass);
+        // mist <dubbo:reference mock="">
         checkMock(interfaceClass);
         Map<String, String> map = new HashMap<String, String>();
 
+        // 当前是consumer端
         map.put(SIDE_KEY, CONSUMER_SIDE);
 
         appendRuntimeParameters(map);
         if (!ProtocolUtils.isGeneric(getGeneric())) {
+            // <dubbo:reference version="">
             String revision = Version.getVersion(interfaceClass, version);
             if (revision != null && revision.length() > 0) {
                 map.put(REVISION_KEY, revision);
             }
 
+            // idea，getwrapper，获取所有方法字符串
             String[] methods = Wrapper.getWrapper(interfaceClass).getMethodNames();
             if (methods.length == 0) {
                 logger.warn("No method found in service interface " + interfaceClass.getName());
                 map.put(METHODS_KEY, ANY_VALUE);
             } else {
+                // 获取接口提供的所有方法名字
                 map.put(METHODS_KEY, StringUtils.join(new HashSet<String>(Arrays.asList(methods)), COMMA_SEPARATOR));
             }
         }
@@ -303,14 +322,18 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         // appendParameters(map, consumer, Constants.DEFAULT_KEY);
         appendParameters(map, consumer);
         appendParameters(map, this);
+
+        // 处理接口提供的所有方法
         Map<String, Object> attributes = null;
         if (CollectionUtils.isNotEmpty(methods)) {
             attributes = new HashMap<String, Object>();
+            // 每一个method对应一个MethodConfig类，<dubbo:method>
             for (MethodConfig methodConfig : methods) {
                 appendParameters(map, methodConfig, methodConfig.getName());
                 String retryKey = methodConfig.getName() + ".retry";
                 if (map.containsKey(retryKey)) {
                     String retryValue = map.remove(retryKey);
+                    // 如果retry的值为false, 则设置次数为0
                     if ("false".equals(retryValue)) {
                         map.put(methodConfig.getName() + ".retries", "0");
                     }
@@ -319,14 +342,18 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             }
         }
 
+
+        // idea，获取服务注册到注册中心的地址
         String hostToRegistry = ConfigUtils.getSystemProperty(DUBBO_IP_TO_REGISTRY);
         if (StringUtils.isEmpty(hostToRegistry)) {
+            // 如果没有配置，则使用本地ip地址
             hostToRegistry = NetUtils.getLocalHost();
         } else if (isInvalidLocalHost(hostToRegistry)) {
             throw new IllegalArgumentException("Specified invalid registry ip from property:" + DUBBO_IP_TO_REGISTRY + ", value:" + hostToRegistry);
         }
         map.put(REGISTER_IP_KEY, hostToRegistry);
 
+        // idea @main method 根据配置创建proxy， ref就是reference.get返回的对象
         ref = createProxy(map);
 
         String serviceKey = URL.buildKey(interfaceName, group, version);
@@ -351,6 +378,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
     @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
     private T createProxy(Map<String, String> map) {
         if (shouldJvmRefer(map)) {
+            // injvm://127.0.0.1:0/<class name>
             URL url = new URL(LOCAL_PROTOCOL, LOCALHOST_VALUE, 0, interfaceClass.getName()).addParameters(map);
             invoker = REF_PROTOCOL.refer(interfaceClass, url);
             if (logger.isInfoEnabled()) {
@@ -360,6 +388,8 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             urls.clear(); // reference retry init will add url to urls, lead to OOM
             if (url != null && url.length() > 0) { // user specified URL, could be peer-to-peer address, or register center's address.
                 String[] us = SEMICOLON_SPLIT_PATTERN.split(url);
+
+                // us == URL String
                 if (us != null && us.length > 0) {
                     for (String u : us) {
                         URL url = URL.valueOf(u);
@@ -393,17 +423,22 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
                 }
             }
 
+            // 如果reference只配置了一个URL，通过SPI加载对应的portocal实现
             if (urls.size() == 1) {
                 invoker = REF_PROTOCOL.refer(interfaceClass, urls.get(0));
             } else {
+                // 利用SPI生成所有的invokers
                 List<Invoker<?>> invokers = new ArrayList<Invoker<?>>();
                 URL registryURL = null;
                 for (URL url : urls) {
                     invokers.add(REF_PROTOCOL.refer(interfaceClass, url));
+                    // mist 如果有提供register地址
                     if (REGISTRY_PROTOCOL.equals(url.getProtocol())) {
                         registryURL = url; // use last registry url
                     }
                 }
+
+                // <dubbo:reference register="">
                 if (registryURL != null) { // registry url is available
                     // use RegistryAwareCluster only when register's CLUSTER is available
                     URL u = registryURL.addParameter(CLUSTER_KEY, RegistryAwareCluster.NAME);
@@ -431,6 +466,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
             metadataReportService.publishConsumer(consumerURL);
         }
         // create service proxy
+        // @main method
         return (T) PROXY_FACTORY.getProxy(invoker);
     }
 
@@ -494,6 +530,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         }));
     }
 
+    // mist 感觉就是设置参数
     private void completeCompoundConfigs() {
         if (consumer != null) {
             if (application == null) {
@@ -566,6 +603,7 @@ public class ReferenceConfig<T> extends AbstractReferenceConfig {
         }
     }
 
+    // 设置引用的接口
     public void setInterface(Class<?> interfaceClass) {
         if (interfaceClass != null && !interfaceClass.isInterface()) {
             throw new IllegalStateException("The interface class " + interfaceClass + " is not a interface!");

@@ -73,6 +73,8 @@ import static org.apache.dubbo.common.constants.CommonConstants.DEFAULT_KEY;
  */
 public class ConfigManager {
     private static final Logger logger = LoggerFactory.getLogger(ConfigManager.class);
+
+    // 饿汉式单例模式
     private static final ConfigManager CONFIG_MANAGER = new ConfigManager();
 
     private ApplicationConfig application;
@@ -99,6 +101,7 @@ public class ConfigManager {
 
     public void setApplication(ApplicationConfig application) {
         if (application != null) {
+            // 确保每个jvm中只有一个application？
             checkDuplicate(this.application, application);
             this.application = application;
         }

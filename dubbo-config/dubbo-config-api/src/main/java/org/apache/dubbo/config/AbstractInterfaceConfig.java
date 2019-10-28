@@ -522,6 +522,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
                     ReflectUtils.forName(interfaceClass.getName() + "Local") : ReflectUtils.forName(local);
             verify(interfaceClass, localClass);
         }
+
+        // idea 印证了如果设置了 <dubbo:reference stub="true" /> 的时候，会查找一个server名字+Stub的类
         if (ConfigUtils.isNotEmpty(stub)) {
             Class<?> localClass = ConfigUtils.isDefault(stub) ?
                     ReflectUtils.forName(interfaceClass.getName() + "Stub") : ReflectUtils.forName(stub);
@@ -742,6 +744,8 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
         return application;
     }
 
+
+    // 设置应用信息
     public void setApplication(ApplicationConfig application) {
         ConfigManager.getInstance().setApplication(application);
         this.application = application;
@@ -787,6 +791,7 @@ public abstract class AbstractInterfaceConfig extends AbstractMethodConfig {
     }
 
     @SuppressWarnings({"unchecked"})
+    // 设置注册中心
     public void setRegistries(List<? extends RegistryConfig> registries) {
         ConfigManager.getInstance().addRegistries((List<RegistryConfig>) registries);
         this.registries = (List<RegistryConfig>) registries;
