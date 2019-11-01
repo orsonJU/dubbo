@@ -419,6 +419,8 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
         if (StringUtils.isEmpty(path)) {
             path = interfaceName;
         }
+
+        // @main method
         doExportUrls();
     }
 
@@ -456,7 +458,7 @@ public class ServiceConfig<T> extends AbstractServiceConfig {
 
     @SuppressWarnings({"unchecked", "rawtypes"})
     private void doExportUrls() {
-        // 加载所有注册URLs
+        // 加载所有注册中心的URLs
         List<URL> registryURLs = loadRegistries(true);
         // 加载当前service支持的发布协议
         for (ProtocolConfig protocolConfig : protocols) {

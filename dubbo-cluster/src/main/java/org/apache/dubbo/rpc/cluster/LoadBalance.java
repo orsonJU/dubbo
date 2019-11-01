@@ -24,6 +24,7 @@ import org.apache.dubbo.rpc.Invoker;
 import org.apache.dubbo.rpc.RpcException;
 import org.apache.dubbo.rpc.cluster.loadbalance.RandomLoadBalance;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 /**
@@ -45,6 +46,6 @@ public interface LoadBalance {
      * @return selected invoker.
      */
     @Adaptive("loadbalance")
+    // idea 从url中获取一个叫做loadbalance的参数值，根据参数值动态加载对应的实现类
     <T> Invoker<T> select(List<Invoker<T>> invokers, URL url, Invocation invocation) throws RpcException;
-
 }
