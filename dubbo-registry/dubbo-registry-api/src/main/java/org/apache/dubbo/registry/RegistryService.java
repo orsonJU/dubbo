@@ -26,6 +26,7 @@ import java.util.List;
  * @see org.apache.dubbo.registry.Registry
  * @see org.apache.dubbo.registry.RegistryFactory#getRegistry(URL)
  */
+// idea，注册中心应该提供注册服务
 public interface RegistryService {
 
     /**
@@ -89,6 +90,7 @@ public interface RegistryService {
      * @return The registered information list, which may be empty, the meaning is the same as the parameters of {@link org.apache.dubbo.registry.NotifyListener#notify(List<URL>)}.
      * @see org.apache.dubbo.registry.NotifyListener#notify(List)
      */
+    // 查找某个服务
     List<URL> lookup(URL url);
 
 }

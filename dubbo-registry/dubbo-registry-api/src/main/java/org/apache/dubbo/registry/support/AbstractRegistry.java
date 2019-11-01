@@ -81,6 +81,8 @@ public abstract class AbstractRegistry implements Registry {
     private final boolean syncSaveFile;
     private final AtomicLong lastCacheChanged = new AtomicLong();
     private final AtomicInteger savePropertiesRetryTimes = new AtomicInteger();
+
+    // idea registered存储所有注册的服务
     private final Set<URL> registered = new ConcurrentHashSet<>();
     private final ConcurrentMap<URL, Set<NotifyListener>> subscribed = new ConcurrentHashMap<>();
     private final ConcurrentMap<URL, Map<String, List<URL>>> notified = new ConcurrentHashMap<>();
@@ -88,6 +90,7 @@ public abstract class AbstractRegistry implements Registry {
     // Local disk cache file
     private File file;
 
+    // 根据注册中心的url来初始化注册中心
     public AbstractRegistry(URL url) {
         setUrl(url);
         // Start file save timer
@@ -121,6 +124,7 @@ public abstract class AbstractRegistry implements Registry {
 
     @Override
     public URL getUrl() {
+        // 返回注册中心的url
         return registryUrl;
     }
 
@@ -257,6 +261,7 @@ public abstract class AbstractRegistry implements Registry {
                 }
             }
         } else {
+            // mist
             final AtomicReference<List<URL>> reference = new AtomicReference<>();
             NotifyListener listener = reference::set;
             subscribe(url, listener); // Subscribe logic guarantees the first notify to return
@@ -305,6 +310,7 @@ public abstract class AbstractRegistry implements Registry {
         if (logger.isInfoEnabled()) {
             logger.info("Subscribe: " + url);
         }
+        // idea 如果对应的url没有创建Set集合，则创建，否则，获取url对应的set集合，添加对应的listener
         Set<NotifyListener> listeners = subscribed.computeIfAbsent(url, n -> new ConcurrentHashSet<>());
         listeners.add(listener);
     }
@@ -463,6 +469,7 @@ public abstract class AbstractRegistry implements Registry {
             for (URL url : new HashSet<>(getRegistered())) {
                 if (url.getParameter(DYNAMIC_KEY, true)) {
                     try {
+                        // unregister所有注册了的provider
                         unregister(url);
                         if (logger.isInfoEnabled()) {
                             logger.info("Destroy unregister url " + url);
@@ -473,12 +480,15 @@ public abstract class AbstractRegistry implements Registry {
                 }
             }
         }
+
+
         Map<URL, Set<NotifyListener>> destroySubscribed = new HashMap<>(getSubscribed());
         if (!destroySubscribed.isEmpty()) {
             for (Map.Entry<URL, Set<NotifyListener>> entry : destroySubscribed.entrySet()) {
                 URL url = entry.getKey();
                 for (NotifyListener listener : entry.getValue()) {
                     try {
+                        // 取消所有已经订阅的consumer
                         unsubscribe(url, listener);
                         if (logger.isInfoEnabled()) {
                             logger.info("Destroy unsubscribe url " + url);

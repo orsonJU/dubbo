@@ -22,6 +22,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * InternalThreadFactory.
  */
+// idea netty都有实现自己的thread factory，其主要的目的是为了方便追踪出现问题的线程
 public class NamedThreadFactory implements ThreadFactory {
 
     protected static final AtomicInteger POOL_SEQ = new AtomicInteger(1);

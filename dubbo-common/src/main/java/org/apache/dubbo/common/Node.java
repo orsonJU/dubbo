@@ -19,6 +19,7 @@ package org.apache.dubbo.common;
 /**
  * Node. (API/SPI, Prototype, ThreadSafe)
  */
+// mist 抽象出来，注册中心也是一个节点，这册中心可以有很多个
 public interface Node {
 
     /**
@@ -26,6 +27,7 @@ public interface Node {
      *
      * @return url.
      */
+    // 返回注册中心的url
     URL getUrl();
 
     /**

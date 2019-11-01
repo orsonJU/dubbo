@@ -45,10 +45,11 @@ import static org.apache.dubbo.registry.Constants.REGISTRY_RETRY_PERIOD_KEY;
 /**
  * FailbackRegistry. (SPI, Prototype, ThreadSafe)
  */
+// idea 失败自动恢复，后台记录失败请求，定时重发。通常用于消息通知操作。
 public abstract class FailbackRegistry extends AbstractRegistry {
 
     /*  retry task map */
-
+    // idea，使用correnthashmap来存放失败的任务，包括1）注册失败 2）撤销注册失败 3）订阅/取消订阅失败 4）通知失败
     private final ConcurrentMap<URL, FailedRegisteredTask> failedRegistered = new ConcurrentHashMap<URL, FailedRegisteredTask>();
 
     private final ConcurrentMap<URL, FailedUnregisteredTask> failedUnregistered = new ConcurrentHashMap<URL, FailedUnregisteredTask>();
@@ -65,6 +66,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
     private final int retryPeriod;
 
     // Timer for failure retry, regular check if there is a request for failure, and if there is, an unlimited retry
+    // idea 默认每隔5秒进行重试
     private final HashedWheelTimer retryTimer;
 
     public FailbackRegistry(URL url) {
@@ -103,6 +105,7 @@ public abstract class FailbackRegistry extends AbstractRegistry {
         if (oldOne != null) {
             return;
         }
+        // 创建一个timer task
         FailedRegisteredTask newTask = new FailedRegisteredTask(url, this);
         oldOne = failedRegistered.putIfAbsent(url, newTask);
         if (oldOne == null) {
