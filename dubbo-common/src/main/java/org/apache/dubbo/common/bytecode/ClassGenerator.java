@@ -288,6 +288,7 @@ public final class ClassGenerator {
                 getClass().getProtectionDomain());
     }
 
+    // idea 从这里开始，就是javassist的使用部分
     public Class<?> toClass(ClassLoader loader, ProtectionDomain pd) {
         if (mCtc != null) {
             mCtc.detach();
@@ -299,6 +300,7 @@ public final class ClassGenerator {
                 mClassName = (mSuperClass == null || javassist.Modifier.isPublic(ctcs.getModifiers())
                         ? ClassGenerator.class.getName() : mSuperClass + "$sc") + id;
             }
+            // idea ClassPool是javassist的类
             mCtc = mPool.makeClass(mClassName);
             if (mSuperClass != null) {
                 mCtc.setSuperclass(ctcs);
